@@ -1,0 +1,29 @@
+package com.dddang.shortlinkpro.model.entity;
+
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+/**
+ * @author dddang
+ * @create 2025-04-13  下午2:49
+ */
+@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+
+public class ShortLink {
+    // 主键
+    private Long id;
+    // 短链
+    private String shortCode;
+    // 原始链接
+    private String originalUrl;
+    // 创建时间
+    private LocalDateTime createdAt;
+    // 访问次数
+    private Integer accessCount;
+}
