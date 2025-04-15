@@ -40,6 +40,10 @@
         const urlInput = document.getElementById('urlInput').value.trim();
         const resultDiv = document.getElementById('result');
         const errorDiv = document.getElementById('error');
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
         errorDiv.innerHTML = '';
         resultDiv.innerHTML = '';
 
@@ -54,6 +58,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: urlInput })
             });
+<<<<<<< HEAD
             const { code, data, message } = await response.json();
 
             if (code === 200) {
@@ -62,6 +67,16 @@
                 loadAllLinks();
             } else {
                 showError(message || '生成失败');
+=======
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showSuccess(`短链接生成成功：${data.shortCode}`);
+                loadAllLinks();
+            } else {
+                showError(data.error || '未知错误');
+>>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
             }
         } catch (err) {
             showError('服务不可用，请检查后端连接');
@@ -71,6 +86,7 @@
     // 加载所有短链
     async function loadAllLinks() {
         const listDiv = document.getElementById('linkList');
+<<<<<<< HEAD
         try {
             const response = await fetch('/api/links');
             const { code, data } = await response.json();
@@ -104,17 +120,56 @@
             }
         } catch (err) {
             listDiv.innerHTML = '服务连接异常';
+=======
+
+        try {
+            const response = await fetch('/api/links');
+            const links = await response.json();
+
+            let html = '';
+            links.forEach(link => {
+                html += `
+                        <div class="link-item">
+                            <div>
+                                <a href="/api/${link.shortCode}"
+                                   target="_blank"
+                                   class="short-url">
+                                    ${link.shortCode}
+                                </a>
+                                <button class="delete-btn"
+                                        onclick="deleteLink('${link.shortCode}')">
+                                    删除
+                                </button>
+                            </div>
+                            <div class="stats">
+                                原始链接：${link.originalUrl}<br>
+                                访问次数：${link.accessCount || 0}<br>
+                                创建时间：${new Date(link.createdAt).toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+            });
+
+            listDiv.innerHTML = html || '<div>暂无短链接</div>';
+        } catch (err) {
+            listDiv.innerHTML = '<div class="error">数据加载失败</div>';
+>>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
         }
     }
 
     // 删除短链
+<<<<<<< HEAD
     async function deleteShortLink(shortCode) {
+=======
+    async function deleteLink(shortCode) {
+>>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
         if (!confirm('确定要删除该短链接吗？')) return;
 
         try {
             const response = await fetch(`/api/links/${shortCode}`, {
                 method: 'DELETE'
             });
+<<<<<<< HEAD
             const { code } = await response.json();
 
             if (code === 200) {
@@ -142,6 +197,36 @@
     window.onload = function() {
         loadAllLinks();
     };
+=======
+
+            if (response.ok) {
+                loadAllLinks();
+            } else {
+                const error = await response.json();
+                showError(error.error || '删除失败');
+            }
+        } catch (err) {
+            showError('网络请求失败');
+        }
+    }
+
+    // 显示成功信息
+    function showSuccess(message) {
+        const div = document.getElementById('result');
+        div.className = 'success';
+        div.innerHTML = message;
+    }
+
+    // 显示错误信息
+    function showError(message) {
+        const div = document.getElementById('error');
+        div.className = 'error';
+        div.innerHTML = message;
+    }
+
+    // 初始化加载
+    window.onload = loadAllLinks;
+>>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
 </script>
 </body>
 </html>
