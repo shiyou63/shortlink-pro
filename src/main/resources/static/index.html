@@ -5,24 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>短链接生成器</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
-        .container { border: 1px solid #ddd; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-        input[type="text"] { width: 70%; padding: 8px; margin-right: 10px; }
-        button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
-        #result, #linkList { margin-top: 20px; }
-        .link-item { padding: 10px; border-bottom: 1px solid #eee; }
-        .short-url { color: #007bff; text-decoration: none; }
-        .stats { color: #6c757d; font-size: 0.9em; margin-top: 5px; }
-        .delete-btn { background: #dc3545; margin-left: 10px; padding: 4px 8px; }
-        #error { color: #dc3545; }
-        .success { color: #28a745; }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f6fa;
+        }
+        .container {
+            background: white;
+            border: 1px solid #e0e3eb;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e0e3eb;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 25px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #result, #linkList {
+            margin-top: 20px;
+        }
+        .link-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e3eb;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 15px;
+        }
+        .link-info {
+            overflow: hidden;
+        }
+        .short-url {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        .short-url:hover {
+            text-decoration: underline;
+        }
+        .original-url {
+            color: #6c757d;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 6px;
+        }
+        .stats {
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .delete-btn {
+            background: #dc3545;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #error {
+            color: #dc3545;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        .success {
+            color: #28a745;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>短链接生成器</h1>
-    <div>
-        <input type="text" id="urlInput" placeholder="输入长链接">
+    <div class="input-group">
+        <input type="text" id="urlInput" placeholder="输入长链接（示例：https://example.com）">
         <button onclick="generateShortLink()">生成短链</button>
     </div>
     <div id="result"></div>
@@ -30,20 +109,31 @@
 </div>
 
 <div class="container">
-    <h1>全部短链列表</h1>
+    <h1>短链列表</h1>
     <div id="linkList">加载中...</div>
 </div>
 
 <script>
+    // 日期格式化工具
+    function formatDateTime(isoString) {
+        const date = new Date(isoString);
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        };
+        return new Intl.DateTimeFormat('zh-CN', options).format(date);
+    }
+
     // 生成短链接
     async function generateShortLink() {
         const urlInput = document.getElementById('urlInput').value.trim();
         const resultDiv = document.getElementById('result');
         const errorDiv = document.getElementById('error');
-<<<<<<< HEAD
-=======
 
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
         errorDiv.innerHTML = '';
         resultDiv.innerHTML = '';
 
@@ -58,35 +148,24 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url: urlInput })
             });
-<<<<<<< HEAD
+
             const { code, data, message } = await response.json();
 
             if (code === 200) {
-                showSuccess(`短链接生成成功：${data}`);
+                showSuccess(`短链创建成功：${data}`);
                 document.getElementById('urlInput').value = '';
                 loadAllLinks();
             } else {
-                showError(message || '生成失败');
-=======
-
-            const data = await response.json();
-
-            if (response.ok) {
-                showSuccess(`短链接生成成功：${data.shortCode}`);
-                loadAllLinks();
-            } else {
-                showError(data.error || '未知错误');
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
+                showError(message || '生成失败，请检查URL格式');
             }
         } catch (err) {
-            showError('服务不可用，请检查后端连接');
+            showError('服务连接失败，请检查网络');
         }
     }
 
     // 加载所有短链
     async function loadAllLinks() {
         const listDiv = document.getElementById('linkList');
-<<<<<<< HEAD
         try {
             const response = await fetch('/api/links');
             const { code, data } = await response.json();
@@ -95,138 +174,78 @@
                 let html = '';
                 data.forEach(link => {
                     html += `
-                            <div class="link-item">
-                                <div>
-                                    <a href="/api/${link.shortCode}"
-                                       target="_blank"
-                                       class="short-url">
-                                        ${link.shortCode}
-                                    </a>
-                                    <span class="stats">
-                                        访问次数: ${link.accessCount} |
-                                        创建时间: ${new Date(link.createdAt).toLocaleString()}
-                                    </span>
-                                </div>
-                                <button class="delete-btn"
-                                        onclick="deleteShortLink('${link.shortCode}')">
-                                    删除
-                                </button>
-                            </div>
-                        `;
-                });
-                listDiv.innerHTML = html;
-            } else {
-                listDiv.innerHTML = '加载失败，请刷新页面';
-            }
-        } catch (err) {
-            listDiv.innerHTML = '服务连接异常';
-=======
-
-        try {
-            const response = await fetch('/api/links');
-            const links = await response.json();
-
-            let html = '';
-            links.forEach(link => {
-                html += `
                         <div class="link-item">
-                            <div>
-                                <a href="/api/${link.shortCode}"
+                            <div class="link-info">
+                                <a href="/${link.shortCode}"
                                    target="_blank"
                                    class="short-url">
                                     ${link.shortCode}
                                 </a>
-                                <button class="delete-btn"
-                                        onclick="deleteLink('${link.shortCode}')">
-                                    删除
-                                </button>
+                                <div class="original-url" title="${link.originalUrl}">
+                                    ${link.originalUrl}
+                                </div>
+                                <div class="stats">
+                                    ID: ${link.id} |
+                                    访问量: ${link.accessCount} |
+                                    创建时间: ${formatDateTime(link.createdAt)}
+                                </div>
                             </div>
-                            <div class="stats">
-                                原始链接：${link.originalUrl}<br>
-                                访问次数：${link.accessCount || 0}<br>
-                                创建时间：${new Date(link.createdAt).toLocaleString()}
-                            </div>
+                            <button class="delete-btn"
+                                    onclick="deleteShortLink('${link.shortCode}')">
+                                删除
+                            </button>
                         </div>
                     `;
-            });
-
-            listDiv.innerHTML = html || '<div>暂无短链接</div>';
+                });
+                listDiv.innerHTML = html || '<div>暂无短链数据</div>';
+            } else {
+                listDiv.innerHTML = '数据加载失败，请刷新重试';
+            }
         } catch (err) {
-            listDiv.innerHTML = '<div class="error">数据加载失败</div>';
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
+            listDiv.innerHTML = '服务连接异常';
         }
     }
 
     // 删除短链
-<<<<<<< HEAD
     async function deleteShortLink(shortCode) {
-=======
-    async function deleteLink(shortCode) {
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
-        if (!confirm('确定要删除该短链接吗？')) return;
+        if (!confirm(`确定要删除短链 ${shortCode} 吗？`)) return;
 
         try {
             const response = await fetch(`/api/links/${shortCode}`, {
                 method: 'DELETE'
             });
-<<<<<<< HEAD
-            const { code } = await response.json();
 
+            const { code } = await response.json();
             if (code === 200) {
                 loadAllLinks();
             } else {
-                alert('删除失败，请重试');
+                alert('删除失败：短链可能不存在');
             }
         } catch (err) {
             alert('服务连接异常');
         }
     }
 
-    // 辅助函数
+    // 消息提示
     function showError(msg) {
         const errorDiv = document.getElementById('error');
-        errorDiv.innerHTML = `<span class="error">⚠️ ${msg}</span>`;
+        errorDiv.innerHTML = `<div class="error">⚠️ ${msg}</div>`;
     }
 
     function showSuccess(msg) {
         const resultDiv = document.getElementById('result');
-        resultDiv.innerHTML = `<span class="success">✅ ${msg}</span>`;
+        resultDiv.innerHTML = `<div class="success">✅ ${msg}</div>`;
     }
 
     // 初始化加载
-    window.onload = function() {
+    window.addEventListener('DOMContentLoaded', () => {
         loadAllLinks();
-    };
-=======
 
-            if (response.ok) {
-                loadAllLinks();
-            } else {
-                const error = await response.json();
-                showError(error.error || '删除失败');
-            }
-        } catch (err) {
-            showError('网络请求失败');
-        }
-    }
-
-    // 显示成功信息
-    function showSuccess(message) {
-        const div = document.getElementById('result');
-        div.className = 'success';
-        div.innerHTML = message;
-    }
-
-    // 显示错误信息
-    function showError(message) {
-        const div = document.getElementById('error');
-        div.className = 'error';
-        div.innerHTML = message;
-    }
-
-    // 初始化加载
-    window.onload = loadAllLinks;
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
+        // 输入框回车事件
+        document.getElementById('urlInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generateShortLink();
+        });
+    });
 </script>
 </body>
 </html>

@@ -1,13 +1,9 @@
 package com.dddang.shortlinkpro.model.entity;
 
-<<<<<<< HEAD
 import lombok.*;
-=======
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
-
 import java.time.LocalDateTime;
 
 /**
@@ -17,13 +13,10 @@ import java.time.LocalDateTime;
 @Data
 @Getter
 @Setter
-<<<<<<< HEAD
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 
-=======
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
 public class ShortLink {
     // 主键
     private Long id;

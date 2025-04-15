@@ -23,13 +23,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-<<<<<<< HEAD
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-=======
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
 
         <!-- MyBatis (移除JPA避免冲突) -->
         <dependency>
@@ -83,13 +80,10 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-<<<<<<< HEAD
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-=======
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
     </dependencies>
 
     <dependencyManagement>
@@ -137,8 +131,4 @@
             </plugin>
         </plugins>
     </build>
-<<<<<<< HEAD
 </project>
-=======
-</project>
->>>>>>> 5cdac6da93f666c791bf28adb2e7b088aaebfee5
