@@ -1,0 +1,23 @@
+<settings>
+  <mirrors>
+    <mirror>
+      <id>aliyun-maven</id>
+      <name>Aliyun Maven Mirror</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>central,jcenter,google,spring-plugin,jitpack</mirrorOf>
+    </mirror>
+  </mirrors>
+  <profiles>
+    <profile>
+      <id>default</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      </properties>
+    </profile>
+  </profiles>
+</settings>

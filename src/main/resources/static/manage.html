@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>短链接管理 - DDDang</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    /* 全局样式 */
+    :root {
+      --primary-color: #2563eb;
+      --danger-color: #dc2626;
+      --success-color: #16a34a;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8fafc;
+    }
+
+    /* 导航栏 */
+    .nav {
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .nav a:hover {
+      opacity: 0.8;
+    }
+
+    /* 主容器 */
+    .container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* 卡片样式 */
+    .card {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 2rem;
+    }
+
+    /* 表格样式 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    /* 操作按钮 */
+    .actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .delete-btn {
+      color: var(--danger-color);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      transition: background 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #fee2e2;
+    }
+
+    /* 分页 */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .page-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.375rem;
+      background: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .page-btn:hover {
+      background: #f3f4f6;
+    }
+
+    .current-page {
+      padding: 0.5rem 1rem;
+      color: var(--primary-color);
+      font-weight: 500;
+    }
+
+    /* 状态提示 */
+    .status-message {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      z-index: 1000;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: var(--success-color);
+      border: 1px solid #bbf7d0;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: var(--danger-color);
+      border: 1px solid #fecaca;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    /* 加载状态 */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #64748b;
+      position: relative;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 3px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+<nav class="nav">
+  <a href="/">生成短链</a>
+  <a href="/manage">管理短链</a>
+</nav>
+<div class="container">
+  <div class="card">
+    <h1 style="margin-top: 0;">短链管理</h1>
+    <table>
+      <thead>
+      <tr>
+        <th>短码</th>
+        <th>原始链接</th>
+        <th>访问次数</th>
+        <th>创建时间</th>
+        <th>操作</th>
+      </tr>
+      </thead>
+      <tbody id="linkList">
+      <tr>
+        <td colspan="5" class="loading">
+          <div class="spinner"></div>
+          加载中...
+        </td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="pagination">
+      <button class="page-btn" id="prevPage">← 上一页</button>
+      <span class="current-page">第 <span id="currentPage">1</span> 页</span>
+      <button class="page-btn" id="nextPage">下一页 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_PREFIX = '/api'
+  let currentPage = 1
+  const PAGE_SIZE = 20
+
+  // 显示状态消息
+  function showMessage(message, type = 'success') {
+    const div = document.createElement('div')
+    div.className = `status-message ${type}`
+    div.textContent = message
+    document.body.appendChild(div)
+
+    setTimeout(() => {
+      div.style.opacity = '0'
+      setTimeout(() => div.remove(), 300)
+    }, 3000)
+  }
+
+  // 加载数据（带分页处理）
+  async function loadData(page = 1) {
+    $('#linkList').html(`
+      <tr>
+        <td colspan="5" class="loading">
+          <div class="spinner"></div>
+          加载中...
+        </td>
+      </tr>
+    `)
+    try {
+      const res = await $.ajax({
+        url: `${API_PREFIX}/short-links`,},  //
+      {
+        page: page - 1,
+                size: PAGE_SIZE
+        ,
+    })
+
+      if (res.code === 200) {
+        const data = res.data
+        if (data.content.length === 0 && page > 1) {
+          currentPage = page - 1
+          return loadData(currentPage)
+        }
+        renderTable(data.content)
+        updatePagination(data.totalPages, page)
+        currentPage = page
+      } else {
+        showMessage(res.msg || '加载失败', 'error')
+      }
+    } catch (error) {
+      showMessage(error.responseJSON?.msg || '服务器错误', 'error')
+    }
+  }
+  // 渲染表格
+  function renderTable(items) {
+    const tbody = $('#linkList')
+    tbody.empty()
+
+    if (items.length === 0) {
+      tbody.html(`
+        <tr>
+          <td colspan="5" class="loading">
+            没有更多数据
+          </td>
+        </tr>
+      `)
+      return
+    }
+
+    items.forEach(item => {
+      const row = `
+        <tr id="row-${item.shortCode}">
+          <td>${item.shortCode}</td>
+          <td><a href="${item.originalUrl}" target="_blank">${item.originalUrl}</a></td>
+          <td>${item.accessCount}</td>
+          <td>${new Date(item.createdAt).toLocaleString()}</td>
+          <td>
+            <button class="delete-btn"
+                    data-code="${item.shortCode}"
+                    onclick="deleteItem('${item.shortCode}')">
+              删除
+            </button>
+          </td>
+        </tr>
+      `
+      tbody.append(row)
+    })
+  }
+
+  // 更新分页状态
+  function updatePagination(totalPages, current) {
+    $('#currentPage').text(current)
+    $('#prevPage').prop('disabled', current === 1)
+    $('#nextPage').prop('disabled', current === totalPages)
+  }
+
+  // 删除操作（优化版）
+  async function deleteItem(shortCode) {
+    if (!confirm('确定要删除这个短链接吗？')) return
+
+    const $btn = $(`button[data-code="${shortCode}"]`)
+    $btn.prop('disabled', true).text('删除中...')
+
+    try {
+      const res = await $.ajax({
+        url: `${API_PREFIX}/short-links/${shortCode}`,
+        type: 'DELETE'
+      })
+
+      if (res.code === 200) {
+        // 立即移除DOM元素
+        $(`#row-${shortCode}`).remove()
+
+        // 智能处理空页
+        const remaining = $('#linkList tr').length
+        if (remaining === 0 && currentPage > 1) {
+          currentPage--
+          await loadData(currentPage)
+        } else {
+          // 微调当前页数据
+          await loadData(currentPage)
+        }
+
+        showMessage('删除成功')
+      } else {
+        showMessage(res.msg || '删除失败', 'error')
+      }
+    } catch (error) {
+      showMessage(error.responseJSON?.msg || '服务器错误', 'error')
+    } finally {
+      $btn.prop('disabled', false).text('删除')
+    }
+  }
+
+  // 初始化
+  $(() => {
+    $('#prevPage').click(() => {
+      if (currentPage > 1) loadData(--currentPage)
+    })
+
+    $('#nextPage').click(() => {
+      loadData(++currentPage)
+    })
+
+    loadData()
+  })
+</script>
+</body>
+</html>

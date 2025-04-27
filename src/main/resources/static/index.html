@@ -1,251 +1,221 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>短链接生成器</title>
+    <title>短链接生成器 - DDDang</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f5f6fa;
+        /* 保持原有样式不变 */
+        :root { --primary-color: #2563eb; --danger-color: #dc2626; }
+        body { font-family: 'Segoe UI', system-ui; margin: 0; background: #f8fafc; }
+        .nav { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 1rem 2rem; }
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 2rem; }
+        .result-box { margin-top: 1.5rem; padding: 1rem; background: #f1f5f9; border-radius: 0.375rem; display: none; }
+        /* 新增加载状态样式 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            display: none;
+            z-index: 999;
         }
-        .container {
-            background: white;
-            border: 1px solid #e0e3eb;
-            padding: 25px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: -20px 0 0 -20px;
         }
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #e0e3eb;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px 25px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        #result, #linkList {
-            margin-top: 20px;
-        }
-        .link-item {
-            padding: 15px;
-            border-bottom: 1px solid #e0e3eb;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            align-items: center;
-            gap: 15px;
-        }
-        .link-info {
-            overflow: hidden;
-        }
-        .short-url {
-            color: #007bff;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 16px;
-        }
-        .short-url:hover {
-            text-decoration: underline;
-        }
-        .original-url {
-            color: #6c757d;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-top: 6px;
-        }
-        .stats {
-            color: #6c757d;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-        .delete-btn {
-            background: #dc3545;
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        #error {
-            color: #dc3545;
-            padding: 10px;
-            margin-top: 15px;
-        }
-        .success {
-            color: #28a745;
-            padding: 10px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>短链接生成器</h1>
-    <div class="input-group">
-        <input type="text" id="urlInput" placeholder="输入长链接（示例：https://example.com）">
-        <button onclick="generateShortLink()">生成短链</button>
-    </div>
-    <div id="result"></div>
-    <div id="error"></div>
+<!-- 加载状态 -->
+<div class="loading-overlay" id="loading">
+    <div class="loader"></div>
 </div>
 
+<nav class="nav">
+    <a href="/">生成短链</a>
+    <a href="/manage">管理短链</a>
+</nav>
+
 <div class="container">
-    <h1>短链列表</h1>
-    <div id="linkList">加载中...</div>
+    <div class="card">
+        <h1 style="margin-top: 0;">生成新短链</h1>
+        <form id="generateForm">
+            <!-- 原始URL输入 -->
+            <div class="form-group">
+                <label for="originalUrl">原始URL</label>
+                <input type="url" id="originalUrl" required
+                       placeholder="https://example.com/very/long/url">
+            </div>
+
+            <!-- 持久化选项 -->
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="persistCheckbox"> 永久保存到数据库
+                </label>
+            </div>
+
+            <!-- 自定义短码 -->
+            <div class="form-group" id="customCodeGroup" style="display: none;">
+                <label for="customCode">自定义短码（4-8位字母数字）</label>
+                <input type="text" id="customCode"
+                       pattern="^[A-Za-z0-9]{4,8}$"
+                       placeholder="留空则自动生成">
+            </div>
+
+            <button type="submit">生成短链接</button>
+        </form>
+
+        <!-- 结果展示 -->
+        <div class="result-box">
+            <div>生成成功！短链接：</div>
+            <a id="shortLink" target="_blank" style="color: var(--primary-color);"></a>
+            <div id="expireTime" style="margin-top: 0.5rem; color: #666;"></div>
+            <div style="margin-top: 1rem;">
+                <button onclick="copyToClipboard()">复制链接</button>
+                <span id="copyStatus" style="color: green; display: none;">✓ 已复制</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-    // 日期格式化工具
-    function formatDateTime(isoString) {
-        const date = new Date(isoString);
-        const options = {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        };
-        return new Intl.DateTimeFormat('zh-CN', options).format(date);
-    }
+    $(document).ready(function() {
+        const API_URL = '/api/short-links/generate';
+        let isSubmitting = false;
 
-    // 生成短链接
-    async function generateShortLink() {
-        const urlInput = document.getElementById('urlInput').value.trim();
-        const resultDiv = document.getElementById('result');
-        const errorDiv = document.getElementById('error');
-
-        errorDiv.innerHTML = '';
-        resultDiv.innerHTML = '';
-
-        if (!urlInput) {
-            showError('请输入有效URL');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/shorten', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: urlInput })
-            });
-
-            const { code, data, message } = await response.json();
-
-            if (code === 200) {
-                showSuccess(`短链创建成功：${data}`);
-                document.getElementById('urlInput').value = '';
-                loadAllLinks();
-            } else {
-                showError(message || '生成失败，请检查URL格式');
-            }
-        } catch (err) {
-            showError('服务连接失败，请检查网络');
-        }
-    }
-
-    // 加载所有短链
-    async function loadAllLinks() {
-        const listDiv = document.getElementById('linkList');
-        try {
-            const response = await fetch('/api/links');
-            const { code, data } = await response.json();
-
-            if (code === 200) {
-                let html = '';
-                data.forEach(link => {
-                    html += `
-                        <div class="link-item">
-                            <div class="link-info">
-                                <a href="/${link.shortCode}"
-                                   target="_blank"
-                                   class="short-url">
-                                    ${link.shortCode}
-                                </a>
-                                <div class="original-url" title="${link.originalUrl}">
-                                    ${link.originalUrl}
-                                </div>
-                                <div class="stats">
-                                    ID: ${link.id} |
-                                    访问量: ${link.accessCount} |
-                                    创建时间: ${formatDateTime(link.createdAt)}
-                                </div>
-                            </div>
-                            <button class="delete-btn"
-                                    onclick="deleteShortLink('${link.shortCode}')">
-                                删除
-                            </button>
-                        </div>
-                    `;
-                });
-                listDiv.innerHTML = html || '<div>暂无短链数据</div>';
-            } else {
-                listDiv.innerHTML = '数据加载失败，请刷新重试';
-            }
-        } catch (err) {
-            listDiv.innerHTML = '服务连接异常';
-        }
-    }
-
-    // 删除短链
-    async function deleteShortLink(shortCode) {
-        if (!confirm(`确定要删除短链 ${shortCode} 吗？`)) return;
-
-        try {
-            const response = await fetch(`/api/links/${shortCode}`, {
-                method: 'DELETE'
-            });
-
-            const { code } = await response.json();
-            if (code === 200) {
-                loadAllLinks();
-            } else {
-                alert('删除失败：短链可能不存在');
-            }
-        } catch (err) {
-            alert('服务连接异常');
-        }
-    }
-
-    // 消息提示
-    function showError(msg) {
-        const errorDiv = document.getElementById('error');
-        errorDiv.innerHTML = `<div class="error">⚠️ ${msg}</div>`;
-    }
-
-    function showSuccess(msg) {
-        const resultDiv = document.getElementById('result');
-        resultDiv.innerHTML = `<div class="success">✅ ${msg}</div>`;
-    }
-
-    // 初始化加载
-    window.addEventListener('DOMContentLoaded', () => {
-        loadAllLinks();
-
-        // 输入框回车事件
-        document.getElementById('urlInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') generateShortLink();
+        // 持久化选项切换
+        $('#persistCheckbox').change(function() {
+            $('#customCodeGroup').toggle(this.checked);
         });
+
+        // 表单提交
+        $('#generateForm').submit(async function(e) {
+            e.preventDefault();
+            if (isSubmitting) return;
+
+            // 显示加载状态
+            $('#loading').fadeIn();
+            isSubmitting = true;
+
+            try {
+                const payload = {
+                    originalUrl: $('#originalUrl').val().trim(),
+                    persist: $('#persistCheckbox').is(':checked'),
+                    customCode: $('#customCode').val().trim() || null
+                };
+
+                // 前端验证
+                if (!validateInput(payload)) return;
+
+                // 发送请求
+                const response = await $.ajax({
+                    url: API_URL,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    JSON: true,
+                    data: JSON.stringify(payload),
+                    dataType: 'json'
+                });
+
+                // 处理响应
+                if (response.code === 200) {
+                    showResult(response.data);
+                } else {
+                    throw new Error(response.msg || '生成失败');
+                }
+            } catch (error) {
+                showError(error);
+            } finally {
+                $('#loading').fadeOut();
+                isSubmitting = false;
+            }
+        });
+
+        // 输入验证
+        function validateInput(data) {
+            // 基础验证
+            if (!data.originalUrl) {
+                alert('请输入原始URL');
+                return false;
+            }
+
+            // URL格式验证
+            try {
+                new URL(data.originalUrl);
+            } catch (e) {
+                alert('URL格式不正确');
+                return false;
+            }
+
+            // 自定义短码验证
+            if (data.customCode && !/^[A-Za-z0-9]{4,8}$/.test(data.customCode)) {
+                alert('短码必须为4-8位字母数字组合');
+                return false;
+            }
+
+            return true;
+        }
+
+        // 显示结果
+        function showResult(data) {
+            const shortUrl = `${window.location.origin}/s/${data.shortCode}`;
+            $('#shortLink').attr('href', shortUrl).text(shortUrl);
+
+            // 显示过期时间（临时存储）
+            if (!data.persist) {
+                const expireTime = new Date();
+                expireTime.setMinutes(expireTime.getMinutes() + 5);
+                $('#expireTime').html(`
+                <span style="color: var(--danger-color);">临时链接</span>
+                将在 ${expireTime.toLocaleTimeString()} 过期
+            `);
+            } else {
+                $('#expireTime').html('<span style="color: var(--primary-color);">永久链接</span>');
+            }
+
+            $('.result-box').fadeIn();
+        }
+
+        // 错误处理
+        function showError(error) {
+            let message = '未知错误';
+            if (error.responseJSON) {
+                message = error.responseJSON.msg || error.responseJSON.message;
+            } else if (error.message) {
+                message = error.message;
+            }
+            alert(`错误: ${message}`);
+        }
     });
+
+    // 复制功能
+    function copyToClipboard() {
+        const text = $('#shortLink').text();
+        navigator.clipboard.writeText(text).then(() => {
+            $('#copyStatus').fadeIn().delay(2000).fadeOut();
+        }).catch(() => {
+            const $temp = $('<input>').val(text).appendTo('body').select();
+            document.execCommand('copy');
+            $temp.remove();
+            $('#copyStatus').fadeIn().delay(2000).fadeOut();
+        });
+    }
 </script>
 </body>
 </html>

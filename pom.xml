@@ -14,7 +14,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <mysql.version>8.0.33</mysql.version>
         <spring-boot.version>2.5.0</spring-boot.version>
-        <mybatis-starter.version>2.2.0</mybatis-starter.version>
+        <mybatis-starter.version>2.1.4</mybatis-starter.version>
     </properties>
 
     <dependencies>
@@ -26,6 +26,45 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.0.1-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.16.3</version> <!-- 当前最新稳定版 -->
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.8.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.0.1</version> <!-- 根据Spring Boot版本选择 -->
+        </dependency>
+        <dependency>
+            <groupId>com.github.yitter</groupId>
+            <artifactId>yitter-idgenerator</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>1.4.7</version> <!-- 适配 Spring Boot 2.5+ -->
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
         </dependency>
 
         <!-- MyBatis (移除JPA避免冲突) -->
@@ -43,10 +82,6 @@
         </dependency>
 
         <!-- Spring Security -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
 
         <!-- Lombok -->
         <dependency>
@@ -76,13 +111,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId> <!-- Lettuce 连接池需要此依赖 -->
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-commons</artifactId>
         </dependency>
     </dependencies>
 
@@ -100,19 +138,21 @@
 
     <build>
         <plugins>
+            <!-- Spring Boot Maven 插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
-                </configuration>
+                <version>2.5.0</version>  <!-- 与你的 Spring Boot 版本一致 -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>  <!-- 关键：在 package 阶段生成可执行 JAR -->
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-            <!-- 启用Lombok注解处理 -->
+
+            <!-- Maven Compiler 插件（仅需配置 Lombok 注解处理器） -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -131,4 +171,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
